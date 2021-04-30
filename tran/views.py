@@ -17,14 +17,8 @@ def get_a_fridenly_word():
 def get_a_friendly_uuid():
     return "/"+"/".join([get_a_fridenly_word() for i in range(3)])+"/"+str(random.randint(0,10000))
 
-
-# Create your views here.
 def index(request):
     return render(request,"index.html")
-
-def login(request):
-    request.session["ipv6"]
-    return
 
 @csrf_exempt
 def postfile(request):
