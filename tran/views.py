@@ -12,10 +12,25 @@ import hashlib
 
 default = get_redis_connection('default')
 
-def get_a_fridenly_word():
-    return data[(random.randint(0,len(data))+int(round(time.time() * 1000000)))%len(data)]
-def get_a_friendly_uuid():
-    return "/"+"/".join([get_a_fridenly_word() for i in range(3)])+"/"+str(random.randint(0,10000))
+def get_a_fridenly_word(w:str)->str:
+    return data[w.__hash__()%len(data)]
+def avsplit(s, n):
+    fn = len(s)//n
+    rn = len(s)%n
+    sr = []
+    ix = 0
+    for i in range(n):
+        if i<rn:
+            sr.append(s[ix:ix+fn+1])
+            ix += fn+1
+        else:
+            sr.append(s[ix:ix+fn])
+            ix += fn
+    return sr
+
+def get_a_friendly_uuid(w:str)->str:
+    p=avsplit(w,4)
+    return "/"+"/".join([get_a_fridenly_word(p[i]) for i in range(3)])+"/"+str(p[3].__hash__()%10000)
 
 def index(request):
     return render(request,"index.html")
@@ -23,13 +38,17 @@ def index(request):
 @csrf_exempt
 def postfile(request):
     if request.method=="POST":
-        uuid=get_a_friendly_uuid()
-        ip=request.POST["ipv6"]
+        ip=request.POST["ip"]
         port=request.POST["port"]
         filename=request.POST["filename"]
+        captcha = request.POST["captcha"]
         password=request.POST.get("password",None)
-        cache.set(uuid,{"port":port,"filename":filename,"ip":ip,"password":password})
-        return HttpResponse(uuid)
+        if hashlib.md5((ip + port + filename + captcha).encode("utf8")).hexdigest().startswith("000"):
+            uuid = get_a_friendly_uuid(ip+port+filename)
+            cache.set(uuid,{"port":port,"filename":filename,"ip":ip,"password":password})
+            return HttpResponse(uuid)
+        else:
+            return HttpResponse("内部错误")
 def getfile(request):
     uuid=request.path
     obj=cache.get(uuid,None)
