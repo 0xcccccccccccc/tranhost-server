@@ -21,5 +21,6 @@ urlpatterns = [
     path('',views.index),
     path('admin/', admin.site.urls),
     path('postfile',views.postfile),
+    path('appendhash', views.appendhash),
     re_path(r'^[\u4e00-\u9fa5].*?$',views.getfile)
 ]
